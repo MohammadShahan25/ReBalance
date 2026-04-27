@@ -263,61 +263,70 @@
   ].join(", ");
   document.querySelectorAll(SPLIT_SELECTOR).forEach(splitText);
 
-  /* ---- 7b. AMBIENT FLOATING PETALS ------------------------------ */
-  /* Just 7 slow petals at low opacity. Subtle "spa" mood, never
-     competes with content. Slightly speeds with scroll velocity. */
-  const petalsContainer = document.createElement("div");
-  petalsContainer.className = "petals";
-  petalsContainer.setAttribute("aria-hidden", "true");
-  const petals = [];
+  /* ---- 7b. DRIFTING LEAF (occasional, ~3 per visit) ------------- */
+  /* A single big stylized leaf glides across the entire viewport,
+     swaying as if caught by a gentle breeze. Triggers ~3 times during
+     a normal visit at staggered intervals so the user notices it
+     without it ever feeling busy. Skipped under reduced-motion. */
   if (!prefersReducedMotion) {
-    document.body.appendChild(petalsContainer);
-    const PETAL_COUNT = 7;
-    for (let i = 0; i < PETAL_COUNT; i++) {
-      const p = document.createElement("span");
-      p.className = "petal";
-      const left = 5 + Math.random() * 90;
-      const size = 10 + Math.random() * 12;
-      const sway = (Math.random() - 0.5) * 80;
-      const opacity = 0.16 + Math.random() * 0.12;
-      const baseDur = 18 + Math.random() * 14;
-      const delay = Math.random() * baseDur;
-      p.style.left = left + "%";
-      p.style.width = size + "px";
-      p.style.height = size + "px";
-      p.style.setProperty("--petal-sway", sway.toFixed(0) + "px");
-      p.style.setProperty("--petal-opacity", opacity.toFixed(2));
-      p.style.animationDuration = baseDur.toFixed(2) + "s";
-      p.style.animationDelay = (-delay).toFixed(2) + "s";
-      petalsContainer.appendChild(p);
-      petals.push({ el: p, baseDur: baseDur });
-    }
+    const leaf = document.createElement("div");
+    leaf.className = "leaf-drift";
+    leaf.setAttribute("aria-hidden", "true");
+    leaf.innerHTML = [
+      '<svg viewBox="0 0 320 90" xmlns="http://www.w3.org/2000/svg">',
+      '<defs>',
+      '<linearGradient id="leafBody" x1="0%" y1="0%" x2="100%" y2="0%">',
+      '<stop offset="0%" stop-color="#a8b88a"/>',
+      '<stop offset="45%" stop-color="#c7b68a"/>',
+      '<stop offset="100%" stop-color="#d8a89a"/>',
+      '</linearGradient>',
+      '<linearGradient id="leafShade" x1="0%" y1="0%" x2="0%" y2="100%">',
+      '<stop offset="0%" stop-color="rgba(255,255,255,0.45)"/>',
+      '<stop offset="100%" stop-color="rgba(75,42,51,0.18)"/>',
+      '</linearGradient>',
+      '</defs>',
+      // main leaf shape: pointed at left, broad in middle, gently tapered at right
+      '<path d="M6 45 C 70 6, 200 4, 300 28 C 312 32, 318 40, 314 46 C 308 52, 290 56, 270 60 C 200 76, 70 78, 6 45 Z" fill="url(#leafBody)"/>',
+      '<path d="M6 45 C 70 6, 200 4, 300 28 C 312 32, 318 40, 314 46 C 308 52, 290 56, 270 60 C 200 76, 70 78, 6 45 Z" fill="url(#leafShade)" opacity="0.55"/>',
+      // central vein
+      '<path d="M10 45 Q 160 40 312 42" stroke="rgba(75,42,51,0.4)" stroke-width="1.4" fill="none" stroke-linecap="round"/>',
+      // side veins
+      '<path d="M70 30 Q 90 38 110 50" stroke="rgba(75,42,51,0.28)" stroke-width="1" fill="none"/>',
+      '<path d="M130 22 Q 150 36 168 52" stroke="rgba(75,42,51,0.28)" stroke-width="1" fill="none"/>',
+      '<path d="M190 22 Q 208 38 222 54" stroke="rgba(75,42,51,0.28)" stroke-width="1" fill="none"/>',
+      '<path d="M240 26 Q 254 38 264 54" stroke="rgba(75,42,51,0.28)" stroke-width="1" fill="none"/>',
+      // little stem nub on the right edge
+      '<path d="M312 42 L 320 40 L 320 46 L 312 46 Z" fill="rgba(75,42,51,0.45)"/>',
+      '</svg>',
+    ].join("");
+    document.body.appendChild(leaf);
 
-    // Scroll-velocity boost (capped, smoothly reverts)
-    let lastScrollY = window.scrollY;
-    let lastScrollT = performance.now();
-    let scrollBoostT = 0;
-    window.addEventListener("scroll", () => {
-      const now = performance.now();
-      const dy = Math.abs(window.scrollY - lastScrollY);
-      const dt = now - lastScrollT;
-      if (dt > 80) {
-        const v = dy / dt; // px/ms
-        const factor = Math.min(1.6, 1 + v * 0.45);
-        for (const p of petals) {
-          p.el.style.animationDuration = (p.baseDur / factor).toFixed(2) + "s";
-        }
-        lastScrollY = window.scrollY;
-        lastScrollT = now;
-        scrollBoostT = now;
-      }
-      // ease back to base after a pause
-      if (now - scrollBoostT > 600) {
-        for (const p of petals) {
-          p.el.style.animationDuration = p.baseDur.toFixed(2) + "s";
-        }
-      }
-    }, { passive: true });
+    let leafBusy = false;
+    function flyLeaf() {
+      if (leafBusy) return;
+      leafBusy = true;
+      // Randomize position, duration, opacity for a natural feel
+      const top = 14 + Math.random() * 56;        // 14vh .. 70vh
+      const dur = 14 + Math.random() * 6;         // 14s .. 20s
+      const op  = 0.18 + Math.random() * 0.10;    // 0.18 .. 0.28
+      leaf.style.setProperty("--leaf-top", top.toFixed(1) + "vh");
+      leaf.style.setProperty("--leaf-dur", dur.toFixed(2) + "s");
+      leaf.style.setProperty("--leaf-op",  op.toFixed(2));
+      // Restart animation by toggling the class
+      leaf.classList.remove("is-flying");
+      // Force reflow so the next class add re-triggers the keyframe
+      void leaf.offsetWidth;
+      leaf.classList.add("is-flying");
+    }
+    leaf.addEventListener("animationend", () => {
+      leaf.classList.remove("is-flying");
+      leafBusy = false;
+    });
+
+    // Three drifts during a typical visit, well spaced.
+    setTimeout(flyLeaf,   7000);   // ~7s in   (catches user soon after landing)
+    setTimeout(flyLeaf,  62000);   // ~1m02s   (mid-scroll)
+    setTimeout(flyLeaf, 135000);   // ~2m15s   (deeper into the page)
   }
 
   /* ---- 7c. SCROLL-DRIVEN LETTER RIPPLE -------------------------- */
