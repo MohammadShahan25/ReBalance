@@ -1149,11 +1149,30 @@ em {
   font-weight: 600;
   letter-spacing: 0.12em;
   box-shadow: var(--shadow-md);
-  transition: transform 0.5s var(--ease);
+  transition: transform 0.5s var(--ease), box-shadow 0.4s var(--ease);
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+a.trainer-badge:hover {
+  box-shadow: 0 18px 38px rgba(75, 42, 51, 0.22);
 }
 
 .trainer-card:hover .trainer-badge {
   transform: translateZ(50px);
+}
+
+.lead-link {
+  color: var(--rose-deep);
+  text-decoration: none;
+  border-bottom: 1px solid rgba(139, 77, 91, 0.45);
+  padding-bottom: 1px;
+  transition: color 0.25s var(--ease), border-color 0.25s var(--ease);
+}
+
+.lead-link:hover {
+  color: var(--rose);
+  border-bottom-color: var(--rose);
 }
 
 /* ================== FINAL CTA ================== */
@@ -1522,47 +1541,48 @@ em {
   .contact-channel-text strong { font-size: 14px; }
 }
 
-/* ================== AMBIENT FLOATING PETALS (all devices) ================== */
-.petals {
+/* ================== DRIFTING LEAF (all devices, occasional) ================== */
+/* A single big leaf glides across the entire viewport from off-screen left
+   to off-screen right, swaying in the wind. JS schedules ~3 drifts per
+   visit. Low opacity so it sits softly above the background but never
+   competes with text. */
+.leaf-drift {
   position: fixed;
-  inset: 0;
+  left: 0;
+  top: var(--leaf-top, 28vh);
+  width: clamp(520px, 72vw, 1100px);
   pointer-events: none;
   z-index: 1;
-  overflow: hidden;
-}
-
-.petal {
-  position: absolute;
-  bottom: -40px;
-  width: 14px;
-  height: 14px;
-  border-radius: 60% 40% 60% 40% / 50% 60% 40% 50%;
-  background: radial-gradient(
-    ellipse at 30% 30%,
-    rgba(245, 213, 213, 0.55),
-    rgba(196, 181, 217, 0.35) 70%,
-    transparent 100%
-  );
   opacity: 0;
-  filter: blur(0.4px);
   will-change: transform, opacity;
-  animation-name: petalDrift;
-  animation-timing-function: linear;
-  animation-iteration-count: infinite;
+  filter: blur(0.5px) drop-shadow(0 14px 24px rgba(75, 42, 51, 0.12));
+  transform: translate3d(-1200px, 0, 0) rotate(-8deg);
 }
 
-@keyframes petalDrift {
+.leaf-drift svg {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+
+.leaf-drift.is-flying {
+  animation: leafDrift var(--leaf-dur, 16s) cubic-bezier(0.42, 0, 0.58, 1) forwards;
+}
+
+@keyframes leafDrift {
   0% {
-    transform: translate3d(0, 0, 0) rotate(0deg);
+    transform: translate3d(-1200px, 0, 0) rotate(-10deg);
     opacity: 0;
   }
-  10% { opacity: var(--petal-opacity, 0.22); }
-  50% {
-    transform: translate3d(calc(var(--petal-sway, 24px)), -50vh, 0) rotate(180deg);
-  }
-  90% { opacity: var(--petal-opacity, 0.22); }
+  6%  { opacity: var(--leaf-op, 0.22); }
+  18% { transform: translate3d(calc(15vw - 200px), -32px, 0) rotate(6deg); }
+  34% { transform: translate3d(calc(32vw - 200px),  22px, 0) rotate(-9deg); }
+  52% { transform: translate3d(calc(50vw - 200px), -26px, 0) rotate(11deg); }
+  70% { transform: translate3d(calc(68vw - 200px),  28px, 0) rotate(-5deg); }
+  86% { transform: translate3d(calc(85vw - 200px), -12px, 0) rotate(7deg); }
+  94% { opacity: var(--leaf-op, 0.22); }
   100% {
-    transform: translate3d(0, -110vh, 0) rotate(360deg);
+    transform: translate3d(calc(100vw + 200px), 16px, 0) rotate(10deg);
     opacity: 0;
   }
 }
@@ -1713,7 +1733,7 @@ em {
   .rocks-mascot .rocker,
   .rocks-mascot .top-stone,
   .mascot-tilt,
-  .petal {
+  .leaf-drift {
     animation: none !important;
   }
 
@@ -1724,7 +1744,7 @@ em {
     animation: none !important;
   }
 
-  .petals { display: none !important; }
+  .leaf-drift { display: none !important; }
   .btn-bloom { display: none !important; }
 }
 
